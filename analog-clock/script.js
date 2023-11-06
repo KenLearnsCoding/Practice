@@ -7,8 +7,8 @@ const hours = document.querySelector('.hour');
 for (let s = 0; s < 60 ; s++) {
     let mSpikeEl = document.createElement('i');
     let sSpikeEl = document.createElement('i');
-    mSpikeEl.className = 'spike'
-    sSpikeEl.className = 'spike'
+    mSpikeEl.className = 'spike';
+    sSpikeEl.className = 'spike';
     mSpikeEl.style = `--rotate:${s * 6}deg`;
     sSpikeEl.style = `--rotate:${s * 6}deg`;
     mSpikeEl.setAttribute('data-i', s);
@@ -23,21 +23,23 @@ function getTime() {
     s = date.getSeconds();
     m = date.getMinutes();
 
-    hour.textContent = date.getHours();
+    hours.textContent = date.getHours();
     minute.textContent = m;
 
-    minutes.style = `--dRotate: ${m * 6}deg`;
+    minutes.style = `--dRotate:${m * 6}deg`;
 
     if(s == 0){
-        seconds.classList.add('stop-amin');
-    } else{
-        seconds.classList.remove('stop-amin');
+        seconds.classList.add('stop-anim');
+    } else {
+        seconds.classList.remove('stop-anim');
     } 
-    if(m == 0) {
-        minutes.classList.add('stop-amin');
-    } else{
-        minutes.classList.remove('stop-amin');
+    if (m == 0) {
+        minutes.classList.add('stop-anim');
+    } else {
+        minutes.classList.remove('stop-anim');
     }
 
-    seconds.style = `--dRotate:${s * 6}deg`;
+    seconds.style = `--dRotate:${6 * s}deg`;
 }
+setInterval(getTime, 1000);
+getTime();
