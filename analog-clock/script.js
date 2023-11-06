@@ -4,11 +4,11 @@ const minute = document.querySelector('.minute');
 const hours = document.querySelector('.hour');
 
 // Create spikes 
-for (lets = 0; s <60; s++) {
+for (let s = 0; s < 60 ; s++) {
     let mSpikeEl = document.createElement('i');
     let sSpikeEl = document.createElement('i');
-    mSpikeEl.className = 'spike';
-    sSpikeEl.className = 'spike';
+    mSpikeEl.className = 'spike'
+    sSpikeEl.className = 'spike'
     mSpikeEl.style = `--rotate:${s * 6}deg`;
     sSpikeEl.style = `--rotate:${s * 6}deg`;
     mSpikeEl.setAttribute('data-i', s);
@@ -23,19 +23,19 @@ function getTime() {
     s = date.getSeconds();
     m = date.getMinutes();
 
-    hours.textContent = date.getHours();
+    hour.textContent = date.getHours();
     minute.textContent = m;
 
-    minute.style = `--dRotate: ${m * 6}deg`;
+    minutes.style = `--dRotate: ${m * 6}deg`;
 
-    if(s==0){
+    if(s == 0){
         seconds.classList.add('stop-amin');
-    } else {
+    } else{
         seconds.classList.remove('stop-amin');
     } 
-    if (m == 0) {
+    if(m == 0) {
         minutes.classList.add('stop-amin');
-    } else {
+    } else{
         minutes.classList.remove('stop-amin');
     }
 
