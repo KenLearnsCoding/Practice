@@ -45,23 +45,36 @@ body, html {
     right: 22px;
     top: -10px;
     transition: 1s linear;
+    transform: rotate(calc( var(--dRotate) - var(--rotate)));
+}
+
+.seconds {
+  --dRotate: 0deg;
+  --dail-size: calc((var(--clock-size)/ 2) - 8px);
+  font-weight: 800;
+  font-size: 18px;
+  transform: rotate(calc( -1 * var(--dRotate)));
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  transition: 1s linear;
 }
 
 .minutes {
     --dail-size: calc((var(--clock-size)/2)-65px);
     font-size: 16px;
-    transform: rotate(cac(-1*var(--dRotate)));
+    transform: rotate(calc(-1*var(--dRotate)));
     position: absolute; 
     inset: 0;
     margin: auto;
     transition: 1s linear;
 }
 
-.stop-amin {
+.stop-anim {
     transition: 0s linear;
 }
 
-.stop-amin .spike:after {
+.stop-anim .spike:after {
   transition: 0s linear !important;
 }
 
