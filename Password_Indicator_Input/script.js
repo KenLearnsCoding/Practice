@@ -18,13 +18,13 @@ const getCaretPosition = (input, selection, pos) => {
     const { scrollLeft, scrollTop } = input;
     // This provides a hook for getSelection to reuse getCaretPosition.
     const selectionPoint = input[selection] || pos || input.selectionStart;
-    const { height,width, left, top } = input.getBoundingClientRect();
+    const { height, width, left, top } = input.getBoundingClientRect();
     // create a dummy element that will be a clone of our input
     const div = document.createElement('div');
-    /// get the computed style of the input and clone it onto the dummy element
+    // get the computed style of the input and clone it onto the dummy element
     const copyStyle = getComputedStyle(input);
-    for (const prop of copyStyle(input)) {
-        div.style[prop] = copyStyle[prop];
+    for (const prop of copyStyle) {
+        div.style[prop] = copyStyle[prop]
     }
     // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
     const swap = '.';
@@ -38,13 +38,13 @@ const getCaretPosition = (input, selection, pos) => {
     // if a single line input then the div needs to be single line and not break out like a text area
     if (input.tagName === 'INPUT') div.style.width = 'auto';
     // Apply absolute positioning to account for textarea resize, etc.
-    div.style.position = 'absolute';
+    div.style.position = 'absolute'
     //create a marker element to obtain caret position
     const span = document.createElement('span');
     // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
     span.textContent = inputValue.substr(selectionPoint) || '.';
     //append the span marker to the div 
-    div.appendChild(span);
+    div.appendChild(span)
     //append the dummy element to the body 
     document.body.appendChild(div);
     //get the marker position, this is the caret position top and left relative to the input
@@ -67,7 +67,7 @@ const getCaretPosition = (input, selection, pos) => {
         height, 
         width, 
         left, 
-        top,
+        top
     }
 }
 
@@ -95,7 +95,7 @@ const useCaretPosition = () => {
     }
 
     const getSelection = (element) => {
-        if( element.current) {
+        if ( element.current) {
             const position = getSelectionPosition(element.current);
             setPosition(position);
             return position;
@@ -114,17 +114,17 @@ const App = () => {
     const [dirty, setDirty] = React.useState(false);
     const [strength, setStrength] = React.useState(0);
     const [focussed, setFocussed] = React.useState(false);
-    const { x, eft, getPosition, getSelection } = useCaretPosition();
+    const { x, left, getPosition, getSelection } = useCaretPosition();
 
     const update = () => {  
         // zxcvbn provides a score from 0-4 with 0 being the worst...
         const { score } = zxcvbn(inputRef.current.value);
         setStrength(score);
-        setDirty(inputRef.current.value.trim()=== '' ? false :true);     
+        setDirty(inputRef.current.value.trim() === '' ? false :true);     
     }
 
     const onInput = () => {
-        const input = inputRef.currentl 
+        const input = inputRef.current; 
         if (input) {
             getPosition(inputRef, input.value.length);
             if (!document.startViewTransition) update()
@@ -149,7 +149,7 @@ const App = () => {
         })
     }
 
-    const onBur = () => {
+    const onBlur = () => {
         if (!document.startViewTransition) blur();
         document.startViewTransition(() => {
             flushSync(blur);
@@ -162,10 +162,10 @@ const App = () => {
 
     return (
         <main>
-            <div ClassName="form-group">
+            <div className="form-group">
                 <label htmlFor="password">
                     <span>Password</span>
-                    <span>{`${Math.floor(strength *2.5)}/10`}</span>
+                    <span>{`${Math.floor(strength * 2.5)}/10`}</span>
                 </label>
                 <div
                     className={`input-wrapper ${dirty ? 'input-wrapper--dirty' : ''} ${
