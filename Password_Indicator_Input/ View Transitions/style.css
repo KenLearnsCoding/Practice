@@ -1,6 +1,6 @@
 *,
 *:after, 
-*before {
+*:before {
     box-sizing: border-box;
 }
 
@@ -102,4 +102,38 @@ input {
 
 .input-wrapper--dirty:not(.input-wrapper--valid) .caret svg path:last-of-type {
     display: block;
+}
+
+.input-wrapper--dirty:not(.input-wrapper--valid) .caret:not(.caret--focussed) .progress {
+    background: hsl(10 80% 70%);
+    clip-path: inset(0 0 0 0);
+}
+
+.input-wrapper--dirty:not(.input-wrapper--valid) .caret svg path:first-of-type {
+    display: none;
+}
+
+.caret svg {
+    opacity: 0;
+    width: 75%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    stroke-width: 3;
+    stroke: white;
+}
+
+.caret .progress {
+    background: hsl(228, 100%, 69%);
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    inset: 0;
+    clip-path: inset(calc(100% - (var(--strength, 0) * 1%)) 0 0 0);
+    transition: clip-path 0.15s;
+}
+
+.caret svg path:last-of-type {
+    display: none;
 }
