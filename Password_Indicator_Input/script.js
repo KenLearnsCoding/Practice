@@ -73,5 +73,143 @@ const getCaretPosition = (input, selection, pos) => {
 
 const getSelectionPosition = (input) => {
     const { y: startY, x: startX } =getCaretPosition(input, 'selectionStart');
-    
+    const { x: endX } = getCaretPosition(input, 'selectionEnd');
+    // Gives you a basic left position for where to put it and the starting position.
+    const x = startX + (endX - startX) / 2;
+    const y = startY;
+    return {
+        x, 
+        y
+    }
 }
+
+const useCaretPosition = () => {
+    const [position, setPosition] = React.useState(null);
+
+    const getPosition = (element, pos) => {
+        if (element.current) {
+            const position = getCaretPosition(element.current, undefined, pos);
+            setPosition(position);
+            return position;
+        }
+    }
+
+    const getSelection = (element) => {
+        if( element.current) {
+            const position = getSelectionPosition(element.current);
+            setPosition(position);
+            return position;
+        }
+    }
+
+    return { ...position, getPosition, getSelection };
+}
+
+/**
+ * end useCaretPosition
+ * */
+const STRENGTH_REQUIREMENT = 4; 
+const App = () => {
+    const inputRef = React.useRef(null);
+    const [dirty, setDirty] = React.useState(false);
+    const [strength, setStrength] = React.useState(0);
+    const [focussed, setFocussed] = React.useState(false);
+    const { x, eft, getPosition, getSelection } = useCaretPosition();
+
+    const update = () => {  
+        // zxcvbn provides a score from 0-4 with 0 being the worst...
+        const { score } = zxcvbn(inputRef.current.value);
+        setStrength(score);
+        setDirty(inputRef.current.value.trim()=== '' ? false :true);     
+    }
+
+    const onInput = () => {
+        const input = inputRef.currentl 
+        if (input) {
+            getPosition(inputRef, input.value.length);
+            if (!document.startViewTransition) update()
+            document.startViewTransition(() => {
+                flushSync(update)
+            })
+        }
+    }
+
+    const focus = () => {
+        setFocussed(true);
+    }
+
+    const blur = () => {
+        setFocussed(false);
+    }
+
+    const onFocus = () => {
+        if (!document.startViewTransition) focus();
+        document.startViewTransition(() => {
+            flushSync(focus);
+        })
+    }
+
+    const onBur = () => {
+        if (!document.startViewTransition) blur();
+        document.startViewTransition(() => {
+            flushSync(blur);
+        })
+    }
+
+    React.useEffect(() => {
+        if (inputRef.current) getPosition(inputRef);
+    }, []);
+
+    return (
+        <main>
+            <div ClassName="form-group">
+                <label htmlFor="password">
+                    <span>Password</span>
+                    <span>{`${Math.floor(strength *2.5)}/10`}</span>
+                </label>
+                <div
+                    className={`input-wrapper ${dirty ? 'input-wrapper--dirty' : ''} ${
+                        strength >= STRENGTH_REQUIREMENT ? 'input-wrapper--valid' : ''
+                    }`}
+                >
+                    <input
+                        spellCheck={false}
+                        id="password"
+                        ref={inputRef}
+                        type="password"
+                        onInput={onInput}
+                        onFocus={onFocus}
+                        onBlur={onBlur}
+                    />
+                    <span
+                        aria-hidden="true"
+                        className={`caret ${dirty ? 'caret--dirty' : ''} ${
+                        focussed ? 'caret--focussed' : ''
+                        }`}
+                        style={{ '--x': x - left, '--strength': strength * 25 }}
+                    >
+                        <span className="progress"></span>
+                        <svg 
+                           xmlns="http://www.w3.org/2000/svg"
+                           fill="none"
+                           viewBox="0 0 24 24"
+                           stroke-width="1.5"
+                           stroke="currentColor"
+                           class="w-6 h-6"
+                        >
+                            <path 
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M4.5 12.75l6 6 9-13.5"
+                            />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        </main>
+    )
+}
+
+
+render(<App />, ROOT_NODE);
