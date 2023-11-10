@@ -1,213 +1,217 @@
-import zxcvbn from 'https://cdn.skypack.dev/zxcvbn'
-import React from 'https://cdn.skypack.dev/react@17.2.0'
-import { flushSync, render } from 'https://cdn.skypack.dev/react-dom@17.2.0'
-// import useCaretPosition from 'https://cdn.skypack.dev/use-caret-position'
-
-const ROOT_NODE = document.querySelector('#app')
-
-/**
- * useCaretPosition
- * */
-/**
- * returns x, y coordinates for absolute positioning of a span within a given text input
- * at a given selection point
- * @param {object} input - the input element to obtain coordinates for
- * @param {number} selectionPoint - the selection point for the input
- */
-const getCaretPosition = (input, selection, pos) => {
-  const { scrollLeft, scrollTop } = input
-  // This provides a hook for getSelection to reuse getCaretPosition.
-  const selectionPoint = input[selection] || pos || input.selectionStart
-  const { height, width, left, top } = input.getBoundingClientRect()
-  // create a dummy element that will be a clone of our input
-  const div = document.createElement('div')
-  // get the computed style of the input and clone it onto the dummy element
-  const copyStyle = getComputedStyle(input)
-  for (const prop of copyStyle) {
-    div.style[prop] = copyStyle[prop]
-  }
-  // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
-  const swap = '.'
-  const inputValue =
-    input.tagName === 'INPUT' ? input.value.replace(/ /g, swap) : input.value
-  // set the div content to that of the textarea up until selection
-  const textContent = inputValue.substr(0, selectionPoint)
-  // set the text content of the dummy element div
-  div.textContent = textContent
-  if (input.tagName === 'TEXTAREA') div.style.height = 'auto'
-  // if a single line input then the div needs to be single line and not break out like a text area
-  if (input.tagName === 'INPUT') div.style.width = 'auto'
-  // Apply absolute positioning to account for textarea resize, etc.
-  div.style.position = 'absolute'
-  // create a marker element to obtain caret position
-  const span = document.createElement('span')
-  // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
-  span.textContent = inputValue.substr(selectionPoint) || '.'
-  // append the span marker to the div
-  div.appendChild(span)
-  // append the dummy element to the body
-  document.body.appendChild(div)
-  // get the marker position, this is the caret position top and left relative to the input
-  const { offsetLeft: spanX, offsetTop: spanY } = span
-  // lastly, remove that dummy element
-  // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
-  document.body.removeChild(div)
-  // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
-  let x = left + spanX
-  let y = top + spanY
-  const { lineHeight, paddingRight } = copyStyle
-  x = Math.min(x - scrollLeft, left + width - parseInt(paddingRight, 10))
-  // Need to account for any scroll position for the window.
-  y =
-    Math.min(y - scrollTop, top + height - parseInt(lineHeight, 10)) +
-    window.scrollY
-  return {
-    x,
-    y,
-    height,
-    width,
-    left,
-    top,
-  }
+*,
+*:after,
+*:before {
+	box-sizing: border-box;
 }
 
-const getSelectionPosition = (input) => {
-  const { y: startY, x: startX } = getCaretPosition(input, 'selectionStart')
-  const { x: endX } = getCaretPosition(input, 'selectionEnd')
-  // Gives you a basic left position for where to put it and the starting position.
-  const x = startX + (endX - startX) / 2
-  const y = startY
-  return {
-    x,
-    y,
-  }
+body {
+	display: grid;
+	place-items: center;
+	min-height: 100vh;
+	font-family:  "SF Pro Text", "SF Pro Icons", "AOS Icons", "Helvetica Neue", Helvetica, Arial, sans-serif, system-ui;
+	color: hsl(0 0% 100%);
+	overflow-x: hidden;
 }
 
-const useCaretPosition = () => {
-  const [position, setPosition] = React.useState(null)
-
-  const getPosition = (element, pos) => {
-    if (element.current) {
-      const position = getCaretPosition(element.current, undefined, pos)
-      setPosition(position)
-      return position
-    }
-  }
-
-  const getSelection = (element) => {
-    if (element.current) {
-      const position = getSelectionPosition(element.current)
-      setPosition(position)
-      return position
-    }
-  }
-
-  return { ...position, getPosition, getSelection }
-}
-/**
- * end useCaretPosition
- * */
-const STRENGTH_REQUIREMENT = 4
-const App = () => {
-  const inputRef = React.useRef(null)
-  const [dirty, setDirty] = React.useState(false)
-  const [strength, setStrength] = React.useState(0)
-  const [focussed, setFocussed] = React.useState(false)
-  const { x, left, getPosition, getSelection } = useCaretPosition()
-
-  const update = () => {
-    // zxcvbn provides a score from 0-4 with 0 being the worst...
-    const { score } = zxcvbn(inputRef.current.value)
-    setStrength(score)
-    setDirty(inputRef.current.value.trim() === '' ? false : true)
-  }
-
-  const onInput = () => {
-    const input = inputRef.current
-    if (input) {
-      getPosition(inputRef, input.value.length)
-      if (!document.startViewTransition) update()
-      document.startViewTransition(() => {
-        flushSync(update)
-      })
-    }
-  }
-
-  const focus = () => {
-    setFocussed(true)
-  }
-
-  const blur = () => {
-    setFocussed(false)
-  }
-
-  const onFocus = () => {
-    if (!document.startViewTransition) focus()
-    document.startViewTransition(() => {
-      flushSync(focus)
-    })
-  }
-
-  const onBlur = () => {
-    if (!document.startViewTransition) blur()
-    document.startViewTransition(() => {
-      flushSync(blur)
-    })
-  }
-
-  React.useEffect(() => {
-    if (inputRef.current) getPosition(inputRef)
-  }, [])
-
-  return (
-    <main>
-      <div className="form-group">
-        <label htmlFor="password">
-          <span>Password</span>
-          <span>{`${Math.floor(strength * 2.5)}/10`}</span>
-        </label>
-        <div
-          className={`input-wrapper ${dirty ? 'input-wrapper--dirty' : ''} ${
-            strength >= STRENGTH_REQUIREMENT ? 'input-wrapper--valid' : ''
-          }`}
-        >
-          <input
-            spellCheck={false}
-            id="password"
-            ref={inputRef}
-            type="password"
-            onInput={onInput}
-            onFocus={onFocus}
-            onBlur={onBlur}
-          />
-          <span
-            aria-hidden="true"
-            className={`caret ${dirty ? 'caret--dirty' : ''} ${
-              focussed ? 'caret--focussed' : ''
-            }`}
-            style={{ '--x': x - left, '--strength': strength * 25 }}
-          >
-            <span className="progress"></span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-6 h-6"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M4.5 12.75l6 6 9-13.5"
-              />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </span>
-        </div>
-      </div>
-    </main>
-  )
+section {
+	min-height: 100vh;
+	width: 100vw;
+	view-timeline-name: --section;
 }
 
-render(<App />, ROOT_NODE)
+section:nth-of-type(1),
+section:nth-of-type(3) {
+	background: hsl(0 0% 100%);
+}
+
+main {
+	overflow: auto;
+	overflow-x: hidden;
+	height: 100vh;
+	width: 100vw;
+/*	scale: 0.5;*/
+	outline: 1rem dashed red;
+}
+
+h2 {
+	font-size: clamp(2rem, 3vw + 1rem, 8rem);
+}
+
+.section__content {
+	min-height: 100vh;
+	width: 100vw;
+	display: grid;
+	place-items: center;
+	position: sticky;
+	top: 0;
+	overflow: hidden;
+}
+
+section:nth-of-type(1),
+section:nth-of-type(3) {
+	color: hsl(0 0% 0%);
+}
+section:nth-of-type(1) .section__content {
+	overflow: hidden;
+}
+
+section:nth-of-type(2) {
+  z-index: 2;
+	color: hsl(0 0% 0%);
+	min-height: 200vh;
+	background: hsl(0 0% 0%);
+}
+
+section:nth-of-type(2) p {
+	--opacity: 1;
+	color: hsl(0 0% 100%);
+	font-size: clamp(1.625rem, 2vw + 1rem, 8rem);
+  letter-spacing: 0;
+  font-weight: bold;
+  line-height: 1;
+  width: 30ch;
+  max-width: calc(100% - 4rem);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  opacity: 0;
+	-webkit-animation: fade-in both linear, fade-out both linear;
+	        animation: fade-in both linear, fade-out both linear;
+	animation-timeline: --section;
+	animation-range: entry 10% entry 35%, exit 0% exit 25%;
+}
+
+section:nth-of-type(1) svg {
+	--opacity: 1;
+	-webkit-animation: blow-out both ease-in, fade-in both ease-in;
+	        animation: blow-out both ease-in, fade-in both ease-in;
+	font-weight: 600;
+	animation-timeline: --section;
+	animation-range: exit-crossing 10% exit 0%, exit-crossing 10% exit-crossing 25%;
+	font-size: clamp(2rem, 10vw + 1rem, 10rem);
+	transform-origin: 50% 50%;
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	opacity: 0.4;
+	translate: -50% -50%;
+	overflow: hidden;
+}
+
+section:nth-of-type(3) {
+  z-index: 4;
+}
+
+section:nth-of-type(3) svg {
+	width: 30vmin;
+	position: absolute;
+	stroke: hsl(0 0% 0%);
+	right: 10%;
+	bottom: 10%;
+	rotate: 10deg;
+}
+
+section:nth-of-type(1) .section__content {
+	overflow: visible;
+	transform-style: preserve-3d;
+	perspective: 100vh;
+}
+
+svg text {
+	font-size: clamp(2rem, 6vw + 1rem, 6rem);
+	font-weight: 600;
+}
+
+@-webkit-keyframes blow-out {
+	to { transform: translate3d(0.05ch, 0, 99vh); }
+}
+
+@keyframes blow-out {
+	to { transform: translate3d(0.05ch, 0, 99vh); }
+}
+
+section:nth-of-type(1) {
+	height: 200vh;
+}
+
+video {
+	position: fixed;
+	inset: 0;
+	-o-object-fit: cover;
+	   object-fit: cover;
+	width: 100%;
+	height: 100vh;
+	filter: saturate(1) brightness(1);
+	opacity: 0;
+	-webkit-animation: fade-in both linear, fade-out both linear;
+	        animation: fade-in both linear, fade-out both linear;
+	animation-timeline: --section;
+	animation-range: entry 0% entry 25%, exit 10% exit 35%;
+}
+
+@-webkit-keyframes fade-in {
+	to {
+		opacity: var(--opacity, 0.2);
+	}
+}
+
+@keyframes fade-in {
+	to {
+		opacity: var(--opacity, 0.2);
+	}
+}
+
+@-webkit-keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+nav {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	border-bottom: 1px solid hsl(0 0% 50%);
+	height: 52px;
+	background: hsl(0 0% 20% / 0.75);
+	-webkit-backdrop-filter: blur(4px);
+	        backdrop-filter: blur(4px);
+	z-index: 5;
+}
+
+
+.nav__content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 800px;
+	max-width: 100vh;
+	padding: 0 1rem;
+	margin: 0 auto;
+	height: 100%;
+}
+
+nav a {
+	text-decoration: none;
+	background: hsl(210 100% 45%);
+	color: hsl(0 0% 98%);
+	font-weight: 400;
+	padding: 0.5rem 1rem;
+	border-radius: 100px;
+	font-size: 0.875rem;
+}
+
+nav img {
+	height: 50%;
+	justify-self: start;
+}
